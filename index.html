@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#090a0f">
+  <meta name="description" content="Discover anime, explore episodes and continue watching with KAZIME.">
+  <title>KAZIME — Anime, without limits</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{color-scheme:dark;--bg:#090a0f;--panel:#11131b;--panel2:#171a24;--line:#242735;--muted:#9296a8;--text:#f5f6fb;--accent:#a78bfa;--accent2:#7c5ce7;--green:#72e0b1;--radius:16px}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:15px 'DM Sans',sans-serif}button,input{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}
+    .topbar{height:72px;display:flex;align-items:center;gap:34px;padding:0 clamp(18px,5vw,76px);position:sticky;top:0;z-index:20;background:#090a0feF;border-bottom:1px solid #ffffff0c;backdrop-filter:blur(18px)}
+    .brand{font:700 25px 'Space Grotesk';letter-spacing:-1.4px;white-space:nowrap}.brand b{color:var(--accent)}.nav{display:flex;gap:25px;color:#b7b9c7;font-size:13px}.nav a:hover,.nav a.active{color:white}
+    .top-actions{margin-left:auto;display:flex;align-items:center;gap:12px}.searchbox{display:flex;align-items:center;gap:9px;background:#171923;border:1px solid #292c3b;border-radius:10px;padding:0 13px;width:min(260px,30vw);height:40px}.searchbox input{background:none;border:0;outline:0;color:white;width:100%;min-width:0;font-size:13px}.iconbtn{height:40px;width:40px;border:1px solid var(--line);background:#151721;color:white;border-radius:10px}
+    main{max-width:1500px;margin:auto;padding:0 clamp(18px,5vw,76px) 80px}.hero{margin:26px 0 48px;min-height:430px;border-radius:22px;overflow:hidden;position:relative;background:#171725;display:flex;align-items:end}.hero-art{position:absolute;inset:0;background:linear-gradient(90deg,#0b0c13 0%,#0b0c13e8 32%,#0b0c1350 68%,#0b0c1320),linear-gradient(0deg,#090a0f 0%,transparent 55%),url('https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1800&q=85') center 34%/cover}.hero-copy{position:relative;padding:55px;max-width:650px}.eyebrow{color:var(--accent);font-size:11px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase}.hero h1{font:700 clamp(38px,5vw,66px)/1.02 'Space Grotesk';letter-spacing:-2.8px;margin:15px 0}.hero p{color:#c0c1cc;line-height:1.7;max-width:490px;font-size:14px}.hero-meta{display:flex;gap:12px;align-items:center;color:#d4d5df;font-size:12px;margin:20px 0}.pill{border:1px solid #ffffff35;border-radius:5px;padding:4px 8px;font-size:10px}.primary,.secondary{border:0;border-radius:9px;padding:12px 18px;font-weight:700;font-size:13px}.primary{background:var(--accent);color:#171124}.primary:hover{background:#c2b0ff}.secondary{background:#ffffff16;color:white;border:1px solid #ffffff24;margin-left:8px}
+    .section{margin:0 0 43px}.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.section h2{font:600 21px 'Space Grotesk';margin:0;letter-spacing:-.5px}.subtle{color:var(--muted);font-size:12px}.cards{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:19px 15px}.anime-card{min-width:0;cursor:pointer;position:relative}.poster-wrap{position:relative;aspect-ratio:3/4.25;border-radius:12px;overflow:hidden;background:#1b1d28;border:1px solid #ffffff0a}.poster-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s}.anime-card:hover img{transform:scale(1.055)}.poster-overlay{position:absolute;inset:auto 0 0;padding:35px 10px 9px;background:linear-gradient(transparent,#080910d9);display:flex;justify-content:space-between;align-items:end;font-size:10px;color:#eee}.type-tag{position:absolute;top:9px;left:9px;background:#0a0b11d9;padding:5px 7px;border-radius:5px;font-size:9px;font-weight:700}.bookmark{position:absolute;right:8px;top:8px;width:29px;height:29px;border-radius:50%;border:1px solid #ffffff55;background:#090a0dbb;color:white}.anime-card h3{font-size:12px;font-weight:600;line-height:1.4;margin:10px 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card-sub{font-size:10px;color:var(--muted)}
+    .skeleton{height:230px;border-radius:12px;background:linear-gradient(100deg,#151722 30%,#202333 50%,#151722 70%);background-size:200% 100%;animation:shine 1.4s infinite}@keyframes shine{to{background-position:-200% 0}}
+    .genre-row{display:flex;gap:9px;flex-wrap:wrap}.genre{padding:9px 15px;background:#141620;border:1px solid var(--line);border-radius:99px;color:#c8c9d4;font-size:11px}.genre:hover{border-color:var(--accent);color:white}
+    .search-results{display:none;padding:22px 0 0}.search-results.show{display:block}.search-results .cards{margin-top:18px}
+    .empty,.error{padding:35px;text-align:center;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:14px}.error button{margin-top:12px}
+    .modal{position:fixed;inset:0;background:#05060bdc;z-index:40;display:none;overflow:auto;padding:5vh 16px;backdrop-filter:blur(8px)}.modal.open{display:block}.detail{max-width:900px;margin:auto;background:#11131b;border:1px solid var(--line);border-radius:18px;overflow:hidden}.detail-hero{min-height:290px;position:relative;background-size:cover;background-position:center;display:flex;align-items:end}.detail-hero:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#11131b,transparent 90%),linear-gradient(90deg,#11131bba,transparent)}.detail-title{position:relative;z-index:1;padding:28px}.detail-title h2{font:700 34px 'Space Grotesk';margin:8px 0}.detail-body{padding:26px}.detail-body p{color:#b5b7c5;line-height:1.7;font-size:13px}.episode-list{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:15px}.episode{background:#1b1e29;border:1px solid var(--line);padding:11px 5px;border-radius:8px;color:#ddd;font-size:11px}.episode:hover{border-color:var(--accent);color:white}.close{float:right;background:#252835;border:0;color:white;border-radius:8px;padding:8px 12px}
+    .watch{display:none;padding-top:28px}.watch.active{display:block}.watch-frame{width:100%;aspect-ratio:16/9;background:#000;border:1px solid var(--line);border-radius:14px;overflow:hidden}.watch-frame iframe{width:100%;height:100%;border:0}.watch-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:17px 0}.watch-controls select{background:#171a24;color:white;border:1px solid var(--line);border-radius:8px;padding:10px}.watch h1{font:600 25px 'Space Grotesk'}.home-view.hidden{display:none}
+    footer{border-top:1px solid var(--line);padding:30px clamp(18px,5vw,76px);color:#777b8e;font-size:11px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+    .toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;background:#252837;border:1px solid #45495d;color:white;padding:12px 18px;border-radius:10px;z-index:60;transition:.25s;font-size:12px}.toast.show{opacity:1;transform:translate(-50%,0)}
+    @media(max-width:1050px){.cards{grid-template-columns:repeat(4,minmax(0,1fr))}.hero{min-height:390px}.hero-copy{padding:38px}.nav{gap:14px}}
+    @media(max-width:680px){.topbar{height:62px;gap:15px;padding:0 16px}.nav{display:none}.brand{font-size:22px}.searchbox{width:min(48vw,210px)}main{padding:0 15px 55px}.hero{margin:15px 0 35px;min-height:390px}.hero-art{background-position:60% center}.hero-copy{padding:25px}.hero h1{font-size:43px}.hero p{font-size:12px}.cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:17px 10px}.poster-wrap{border-radius:9px}.anime-card h3{font-size:11px}.section h2{font-size:18px}.episode-list{grid-template-columns:repeat(4,1fr)}.detail-title{padding:20px}.detail-body{padding:18px}.detail-title h2{font-size:27px}}
+    @media(max-width:390px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.searchbox{width:42vw}}
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#" id="homeLink">KAZ<b>IME</b></a>
+  <nav class="nav"><a href="#home" class="active">Home</a><a href="#trending">Trending</a><a href="#popular">Popular</a><a href="#latest">Latest</a><a href="#genres">Genres</a></nav>
+  <div class="top-actions">
+    <label class="searchbox"><span>⌕</span><input id="searchInput" placeholder="Search anime..." autocomplete="off"></label>
+    <button class="iconbtn" id="settingsBtn" title="API settings">⚙</button>
+  </div>
+</header>
+<main>
+  <div class="home-view" id="homeView">
+    <section class="hero" id="home"><div class="hero-art"></div><div class="hero-copy">
+      <div class="eyebrow">Your next obsession starts here</div><h1>ANIME<br>WITHOUT LIMITS.</h1>
+      <p>Discover new worlds, unforgettable stories and the anime everyone is talking about. Your next favourite is one click away.</p>
+      <div class="hero-meta"><span class="pill">SUB & DUB</span><span>Curated for anime fans</span><span>✦</span></div>
+      <button class="primary" id="exploreBtn">Explore anime&nbsp; →</button><button class="secondary" id="randomBtn">Surprise me</button>
+    </div></section>
+    <section class="search-results" id="searchResults"><div class="section-head"><h2 id="searchHeading">Search results</h2><span class="subtle" id="searchCount"></span></div><div class="cards" id="searchGrid"></div></section>
+    <section class="section" id="trending"><div class="section-head"><h2>Trending now</h2><span class="subtle">What fans are watching</span></div><div class="cards" id="trendingGrid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></section>
+    <section class="section" id="popular"><div class="section-head"><h2>Most popular</h2><span class="subtle">Fan favourites</span></div><div class="cards" id="popularGrid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></section>
+    <section class="section" id="latest"><div class="section-head"><h2>Recently updated</h2><span class="subtle">Fresh episodes</span></div><div class="cards" id="latestGrid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></section>
+    <section class="section" id="genres"><div class="section-head"><h2>Explore by genre</h2></div><div class="genre-row" id="genreRow"><button class="genre" data-genre="action">Action</button><button class="genre" data-genre="adventure">Adventure</button><button class="genre" data-genre="comedy">Comedy</button><button class="genre" data-genre="drama">Drama</button><button class="genre" data-genre="fantasy">Fantasy</button><button class="genre" data-genre="romance">Romance</button><button class="genre" data-genre="sci-fi">Sci-Fi</button><button class="genre" data-genre="sports">Sports</button><button class="genre" data-genre="isekai">Isekai</button><button class="genre" data-genre="horror">Horror</button></div></section>
+    <section class="section" id="watchlistSection"><div class="section-head"><h2>Your watchlist</h2><span class="subtle">Saved on this device</span></div><div class="cards" id="watchlistGrid"></div></section>
+  </div>
+  <section class="watch" id="watchView">
+    <button class="secondary" id="backHome">← Back to browse</button>
+    <h1 id="watchTitle">Now playing</h1><div class="subtle" id="watchEpisodeLabel">Select an episode</div>
+    <div class="watch-frame" id="playerFrame"><div class="empty">Choose an episode to load the player.</div></div>
+    <div class="watch-controls"><label class="subtle">Audio</label><select id="audioType"><option value="sub">SUB</option><option value="dub">DUB</option></select><label class="subtle">Server</label><select id="serverSelect"><option>Loading…</option></select></div>
+    <section class="section"><div class="section-head"><h2>Episodes</h2></div><div class="episode-list" id="watchEpisodes"></div></section>
+  </section>
+</main>
+<footer><span>© <span id="year"></span> KAZIME. Made for anime fans.</span><span>Anime data provided by an unofficial third-party API. Content belongs to its respective owners.</span></footer>
+<div class="modal" id="detailModal"><div class="detail"><div class="detail-hero" id="detailHero"><div class="detail-title"><button class="close" id="closeModal">✕</button><div class="eyebrow" id="detailType">ANIME</div><h2 id="detailName">Title</h2><div id="detailMeta" class="subtle"></div><div style="margin-top:16px"><button class="primary" id="detailWatch">Watch now →</button><button class="secondary" id="saveAnime">＋ Watchlist</button></div></div></div><div class="detail-body"><p id="detailSynopsis"></p><div class="subtle" id="detailGenres"></div><h3 style="font:600 17px 'Space Grotesk';margin-top:28px">Episodes</h3><div class="episode-list" id="detailEpisodes"></div></div></div></div>
+<div class="modal" id="settingsModal"><div class="detail" style="max-width:520px;padding:26px"><button class="close" id="closeSettings">✕</button><div class="eyebrow">Connection</div><h2 style="font:600 25px 'Space Grotesk'">API settings</h2><p class="subtle">Enter your deployed HiAnime API base URL. Example: https://your-api.vercel.app</p><input id="apiInput" placeholder="https://your-api-domain.com" style="width:100%;padding:13px;background:#090a0f;border:1px solid var(--line);border-radius:9px;color:white;margin:8px 0 14px"><button class="primary" id="saveApi">Save & connect</button><p class="subtle" style="margin-top:18px">The website uses the API's /api/v2 endpoints. Deploy the API separately before connecting.</p></div></div>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const API_PATH = '/api/v2';
+  let apiBase = localStorage.getItem('kazime_api') || '';
+  let currentAnime = null, currentEpisodes = [], currentEpisodeId = null, currentServers = [];
+  const saved = () => JSON.parse(localStorage.getItem('kazime_saved') || '[]');
+  const notify = msg => { const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300); };
+  const apiUrl = path => (apiBase.replace(/\/$/,'') + API_PATH + path);
+  async function api(path) {
+    if(!apiBase) throw new Error('Set your API URL in ⚙ settings first.');
+    const res = await fetch(apiUrl(path), {headers:{Accept:'application/json'}});
+    if(!res.ok) throw new Error('API request failed ('+res.status+'). Check your API URL and deployment.');
+    const json = await res.json();
+    if(json.success === false) throw new Error(json.message || 'API returned an error.');
+    return json.data ?? json;
+  }
+  function listFrom(data) {
+    if(Array.isArray(data)) return data;
+    if(!data || typeof data!=='object') return [];
+    for(const k of ['response','results','animes','animeList','trending','mostPopular','latestEpisode','newAdded','topAiring','spotlight']) if(Array.isArray(data[k])) return data[k];
+    return [];
+  }
+  function titleOf(a){return a?.title || a?.name || a?.japanese || 'Untitled anime'}
+  function idOf(a){return a?.id || a?.animeId || ''}
+  function posterOf(a){return a?.poster || a?.image || a?.posterUrl || a?.cover || ''}
+  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function card(a){
+    const id=idOf(a), poster=posterOf(a), title=titleOf(a);
+    const marked=saved().some(x=>x.id===id);
+    return '<article class="anime-card" data-id="'+esc(id)+'"><div class="poster-wrap"><img loading="lazy" src="'+esc(poster)+'" alt="'+esc(title)+'" onerror="this.style.opacity=.15"><span class="type-tag">'+esc(a.type||'ANIME')+'</span><button class="bookmark" data-save="'+esc(id)+'" title="Save">'+(marked?'✓':'+')+'</button><div class="poster-overlay"><span>'+esc(a.duration||'')+'</span><span>'+(a.episodes?.sub ?? a.episodes?.eps ?? '')+' eps</span></div></div><h3>'+esc(title)+'</h3><div class="card-sub">'+esc(a.alternativeTitle||a.status||'Explore details')+'</div></article>';
+  }
+  function renderGrid(selector,items){
+    const el=$(selector); if(!el)return;
+    el.innerHTML=items.length?items.map(card).join(''):'<div class="empty" style="grid-column:1/-1">No anime found.</div>';
+  }
+  async function loadHome(){
+    try{
+      const d=await api('/home');
+      const spotlight=d.spotlight?.[0];
+      if(spotlight){$('#detailName').textContent=titleOf(spotlight);}
+      renderGrid('#trendingGrid',d.trending||[]);
+      renderGrid('#popularGrid',d.mostPopular||[]);
+      renderGrid('#latestGrid',d.latestEpisode||d.newAdded||[]);
+      if(d.genres?.length) $('#genreRow').innerHTML=d.genres.slice(0,22).map(g=>'<button class="genre" data-genre="'+esc(typeof g==='string'?g:g.name)+'">'+esc(typeof g==='string'?g:g.name)+'</button>').join('');
+    }catch(e){['#trendingGrid','#popularGrid','#latestGrid'].forEach(s=>$(s).innerHTML='<div class="error" style="grid-column:1/-1">'+esc(e.message)+'</div>');}
+    renderWatchlist();
+  }
+  async function search(q){
+    if(!q.trim()){$('#searchResults').classList.remove('show');return;}
+    $('#searchResults').classList.add('show');$('#searchHeading').textContent='Results for “'+q+'”';$('#searchGrid').innerHTML='<div class="skeleton"></div>'.repeat(6);
+    try{const d=await api('/search?keyword='+encodeURIComponent(q)+'&page=1');const items=listFrom(d);$('#searchCount').textContent=items.length+' results';renderGrid('#searchGrid',items);}
+    catch(e){$('#searchGrid').innerHTML='<div class="error" style="grid-column:1/-1">'+esc(e.message)+'</div>';}
+  }
+  let searchTimer;$('#searchInput').addEventListener('input',e=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>search(e.target.value),350);});
+  document.addEventListener('click',e=>{
+    const saveBtn=e.target.closest('[data-save]');if(saveBtn){e.stopPropagation();toggleSaved(saveBtn.dataset.save);return;}
+    const c=e.target.closest('.anime-card');if(c?.dataset.id)openAnime(c.dataset.id);
+    const g=e.target.closest('[data-genre]');if(g)loadGenre(g.dataset.genre);
+  });
+  function toggleSaved(id){
+    const arr=saved();const i=arr.findIndex(x=>x.id===id);
+    if(i>=0)arr.splice(i,1);else {const el=document.querySelector('.anime-card[data-id="'+CSS.escape(id)+'"]');arr.push({id,title:el?.querySelector('h3')?.textContent||id,poster:el?.querySelector('img')?.src||''});}
+    localStorage.setItem('kazime_saved',JSON.stringify(arr));renderWatchlist();document.querySelectorAll('[data-save="'+CSS.escape(id)+'"]').forEach(b=>b.textContent=i>=0?'+':'✓');notify(i>=0?'Removed from watchlist':'Added to watchlist');
+  }
+  function renderWatchlist(){const arr=saved();$('#watchlistGrid').innerHTML=arr.length?arr.map(a=>card({id:a.id,title:a.title,poster:a.poster})).join(''):'<div class="empty" style="grid-column:1/-1">Your watchlist is empty. Save anime with the + button.</div>';}
+  async function loadGenre(g){
+    $('#searchResults').classList.add('show');$('#searchHeading').textContent=g.toUpperCase()+' anime';$('#searchGrid').innerHTML='<div class="skeleton"></div>'.repeat(6);$('#searchResults').scrollIntoView({behavior:'smooth'});
+    try{const d=await api('/animes/genre/'+encodeURIComponent(g)+'?page=1');renderGrid('#searchGrid',listFrom(d));}
+    catch(e){$('#searchGrid').innerHTML='<div class="error" style="grid-column:1/-1">'+esc(e.message)+'</div>';}
+  }
+  async function openAnime(id){
+    try{
+      const d=await api('/anime/'+encodeURIComponent(id));currentAnime=d;
+      $('#detailName').textContent=titleOf(d);$('#detailType').textContent=d.type||'ANIME';
+      $('#detailMeta').textContent=[d.rating,d.type,d.duration,d.MAL_score?'Score '+d.MAL_score:''].filter(Boolean).join(' · ');
+      $('#detailSynopsis').textContent=d.synopsis||'Synopsis unavailable.';
+      $('#detailGenres').textContent=(d.genres||[]).join('  ·  ');
+      $('#detailHero').style.backgroundImage=d.poster?'linear-gradient(90deg,#11131b88,transparent),url("'+d.poster+'")':'none';
+      $('#detailEpisodes').innerHTML='<div class="subtle">Loading episodes…</div>';
+      $('#saveAnime').textContent=saved().some(x=>x.id===id)?'✓ Saved':'＋ Watchlist';
+      $('#detailWatch').onclick=()=>openWatch(id,1);
+      $('#saveAnime').onclick=()=>{const exists=saved().some(x=>x.id===id);if(exists){localStorage.setItem('kazime_saved',JSON.stringify(saved().filter(x=>x.id!==id)));notify('Removed from watchlist');}else{localStorage.setItem('kazime_saved',JSON.stringify([...saved(),{id,title:titleOf(d),poster:posterOf(d)}]));notify('Added to watchlist');}$('#saveAnime').textContent=exists?'＋ Watchlist':'✓ Saved';renderWatchlist();};
+      $('#detailModal').classList.add('open');
+      const ep=await api('/episodes/'+encodeURIComponent(id));currentEpisodes=listFrom(ep);
+      $('#detailEpisodes').innerHTML=currentEpisodes.map((x,i)=>'<button class="episode" data-episode="'+i+'">EP '+esc(x.episodeNumber??i+1)+'</button>').join('')||'<div class="subtle">No episodes listed.</div>';
+      $('#detailEpisodes').querySelectorAll('[data-episode]').forEach(b=>b.onclick=()=>openWatch(id,Number(b.dataset.episode)+1));
+    }catch(e){notify(e.message);}
+  }
+  async function openWatch(id,episodeNo){
+    $('#detailModal').classList.remove('open');$('#homeView').classList.add('hidden');$('#watchView').classList.add('active');$('#watchTitle').textContent=currentAnime?titleOf(currentAnime):'Now playing';window.scrollTo(0,0);
+    try{
+      if(!currentEpisodes.length)currentEpisodes=listFrom(await api('/episodes/'+encodeURIComponent(id)));
+      renderEpisodes();
+      const ep=currentEpisodes.find(x=>Number(x.episodeNumber)===Number(episodeNo))||currentEpisodes[Math.max(0,episodeNo-1)];
+      if(ep) await loadServers(ep);
+    }catch(e){$('#playerFrame').innerHTML='<div class="empty">'+esc(e.message)+'</div>';}
+  }
+  function renderEpisodes(){
+    $('#watchEpisodes').innerHTML=currentEpisodes.map((x,i)=>'<button class="episode" data-watch-ep="'+i+'">EP '+esc(x.episodeNumber??i+1)+'</button>').join('');
+    $('#watchEpisodes').querySelectorAll('[data-watch-ep]').forEach(b=>b.onclick=()=>loadServers(currentEpisodes[Number(b.dataset.watchEp)]));
+  }
+  async function loadServers(ep){
+    currentEpisodeId=ep.id;$('#watchEpisodeLabel').textContent='Episode '+(ep.episodeNumber??'');
+    $('#playerFrame').innerHTML='<div class="empty">Loading available servers…</div>';
+    try{
+      const d=await api('/servers/'+encodeURIComponent(ep.id)+'?type='+$('#audioType').value);
+      const data=d.data||d;currentServers=data.servers||data.sources||[];
+      $('#serverSelect').innerHTML=currentServers.map((s,i)=>'<option value="'+i+'">'+esc(s.name||s.serverName||('Server '+(i+1)))+'</option>').join('')||'<option>No servers</option>';
+      showServer(0);
+    }catch(e){$('#playerFrame').innerHTML='<div class="empty">'+esc(e.message)+'</div>';}
+  }
+  function showServer(i){
+    const s=currentServers[i];const url=s?.iframe||s?.url||s?.link;
+    if(!url){$('#playerFrame').innerHTML='<div class="empty">No playable embed URL returned by this server.</div>';return;}
+    const frame=document.createElement('iframe');frame.src=url;frame.allow='autoplay; fullscreen; picture-in-picture';frame.allowFullscreen=true;frame.referrerPolicy='origin';
+    $('#playerFrame').replaceChildren(frame);
+  }
+  $('#serverSelect').addEventListener('change',e=>showServer(Number(e.target.value)));
+  $('#audioType').addEventListener('change',()=>{if(currentEpisodeId)loadServers({id:currentEpisodeId,episodeNumber:$('#watchEpisodeLabel').textContent.replace(/\D/g,'')});});
+  $('#backHome').onclick=()=>{$('#watchView').classList.remove('active');$('#homeView').classList.remove('hidden');window.scrollTo(0,0);};
+  $('#closeModal').onclick=()=>$('#detailModal').classList.remove('open');
+  $('#detailModal').addEventListener('click',e=>{if(e.target===$('#detailModal'))$('#detailModal').classList.remove('open');});
+  $('#settingsBtn').onclick=()=>{$('#apiInput').value=apiBase;$('#settingsModal').classList.add('open');};
+  $('#closeSettings').onclick=()=>$('#settingsModal').classList.remove('open');
+  $('#saveApi').onclick=()=>{apiBase=$('#apiInput').value.trim().replace(/\/$/,'');localStorage.setItem('kazime_api',apiBase);$('#settingsModal').classList.remove('open');loadHome();notify('API connection updated');};
+  $('#exploreBtn').onclick=()=>$('#trending').scrollIntoView({behavior:'smooth'});
+  $('#randomBtn').onclick=async()=>{try{const d=await api('/random');const id=d.id||d.data?.id;if(id)openAnime(id);else notify('No random anime returned');}catch(e){notify(e.message);}};
+  $('#homeLink').onclick=e=>{e.preventDefault();$('#backHome').click();};
+  $('#year').textContent=new Date().getFullYear();
+  if(!apiBase){$('#settingsModal').classList.add('open');$('#apiInput').placeholder='Paste your deployed API URL';}
+  else loadHome();
+})();
+</script>
+</body>
+</html>
