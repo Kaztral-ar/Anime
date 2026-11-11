@@ -72,7 +72,7 @@
   const API_PATH = '/api/v2';
   let apiBase = localStorage.getItem('kazime_api') || '';
   let currentAnime = null, currentEpisodes = [], currentEpisodeId = null, currentServers = [];
-  const saved = () => JSON.parse(localStorage.getItem('kazime_saved') || '[]');
+  const saved = () => { try { const value=JSON.parse(localStorage.getItem('kazime_saved') || '[]'); return Array.isArray(value)?value:[]; } catch { return []; } };
   const notify = msg => { const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300); };
   const apiUrl = path => (apiBase.replace(/\/$/,'') + API_PATH + path);
   async function api(path) {
@@ -83,15 +83,24 @@
     if(json.success === false) throw new Error(json.message || 'API returned an error.');
     return json.data ?? json;
   }
+  // HiAnime API responses use { success, data }, with list payloads nested
+  // under keys such as animes or episodes. Normalize those variants here.
   function listFrom(data) {
     if(Array.isArray(data)) return data;
     if(!data || typeof data!=='object') return [];
-    for(const k of ['response','results','animes','animeList','trending','mostPopular','latestEpisode','newAdded','topAiring','spotlight']) if(Array.isArray(data[k])) return data[k];
+    for(const k of ['animes','episodes','response','results','animeList','trending','mostPopular','latestEpisode','newAdded','topAiring','spotlight','sources','servers']) {
+      if(Array.isArray(data[k])) return data[k];
+    }
     return [];
   }
   function titleOf(a){return a?.title || a?.name || a?.japanese || 'Untitled anime'}
-  function idOf(a){return a?.id || a?.animeId || ''}
-  function posterOf(a){return a?.poster || a?.image || a?.posterUrl || a?.cover || ''}
+  function idOf(a){return a?.id || a?.animeId || a?.anime_id || ''}
+  function posterOf(a){return a?.poster || a?.image || a?.posterUrl || a?.cover || a?.thumbnail || ''}
+  function normalizeAnime(data){return data?.anime || data?.animeInfo || data?.detail || data || {}}
+  function normalizeEpisodes(data){
+    const root=data?.data ?? data;
+    return Array.isArray(root) ? root : (root?.episodes || root?.episodeList || root?.response || []);
+  }
   function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   function card(a){
     const id=idOf(a), poster=posterOf(a), title=titleOf(a);
@@ -105,8 +114,6 @@
   async function loadHome(){
     try{
       const d=await api('/home');
-      const spotlight=d.spotlight?.[0];
-      if(spotlight){$('#detailName').textContent=titleOf(spotlight);}
       renderGrid('#trendingGrid',d.trending||[]);
       renderGrid('#popularGrid',d.mostPopular||[]);
       renderGrid('#latestGrid',d.latestEpisode||d.newAdded||[]);
@@ -117,7 +124,7 @@
   async function search(q){
     if(!q.trim()){$('#searchResults').classList.remove('show');return;}
     $('#searchResults').classList.add('show');$('#searchHeading').textContent='Results for “'+q+'”';$('#searchGrid').innerHTML='<div class="skeleton"></div>'.repeat(6);
-    try{const d=await api('/search?keyword='+encodeURIComponent(q)+'&page=1');const items=listFrom(d);$('#searchCount').textContent=items.length+' results';renderGrid('#searchGrid',items);}
+    try{const d=await api('/search?keyword='+encodeURIComponent(q)+'&page=1');const items=listFrom(d);$('#searchCount').textContent=(d.pageInfo?.totalPages ? 'Page '+(d.pageInfo.currentPage||1)+' of '+d.pageInfo.totalPages : items.length+' results');renderGrid('#searchGrid',items);}
     catch(e){$('#searchGrid').innerHTML='<div class="error" style="grid-column:1/-1">'+esc(e.message)+'</div>';}
   }
   let searchTimer;$('#searchInput').addEventListener('input',e=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>search(e.target.value),350);});
@@ -134,12 +141,12 @@
   function renderWatchlist(){const arr=saved();$('#watchlistGrid').innerHTML=arr.length?arr.map(a=>card({id:a.id,title:a.title,poster:a.poster})).join(''):'<div class="empty" style="grid-column:1/-1">Your watchlist is empty. Save anime with the + button.</div>';}
   async function loadGenre(g){
     $('#searchResults').classList.add('show');$('#searchHeading').textContent=g.toUpperCase()+' anime';$('#searchGrid').innerHTML='<div class="skeleton"></div>'.repeat(6);$('#searchResults').scrollIntoView({behavior:'smooth'});
-    try{const d=await api('/animes/genre/'+encodeURIComponent(g)+'?page=1');renderGrid('#searchGrid',listFrom(d));}
+    try{const slug=g.toLowerCase().replace(/\s+/g,'-');const d=await api('/animes/genre/'+encodeURIComponent(slug)+'?page=1');renderGrid('#searchGrid',listFrom(d));}
     catch(e){$('#searchGrid').innerHTML='<div class="error" style="grid-column:1/-1">'+esc(e.message)+'</div>';}
   }
   async function openAnime(id){
     try{
-      const d=await api('/anime/'+encodeURIComponent(id));currentAnime=d;
+      const raw=await api('/anime/'+encodeURIComponent(id));const d=normalizeAnime(raw);currentAnime=d;
       $('#detailName').textContent=titleOf(d);$('#detailType').textContent=d.type||'ANIME';
       $('#detailMeta').textContent=[d.rating,d.type,d.duration,d.MAL_score?'Score '+d.MAL_score:''].filter(Boolean).join(' · ');
       $('#detailSynopsis').textContent=d.synopsis||'Synopsis unavailable.';
@@ -150,7 +157,7 @@
       $('#detailWatch').onclick=()=>openWatch(id,1);
       $('#saveAnime').onclick=()=>{const exists=saved().some(x=>x.id===id);if(exists){localStorage.setItem('kazime_saved',JSON.stringify(saved().filter(x=>x.id!==id)));notify('Removed from watchlist');}else{localStorage.setItem('kazime_saved',JSON.stringify([...saved(),{id,title:titleOf(d),poster:posterOf(d)}]));notify('Added to watchlist');}$('#saveAnime').textContent=exists?'＋ Watchlist':'✓ Saved';renderWatchlist();};
       $('#detailModal').classList.add('open');
-      const ep=await api('/episodes/'+encodeURIComponent(id));currentEpisodes=listFrom(ep);
+      const ep=await api('/episodes/'+encodeURIComponent(id));currentEpisodes=normalizeEpisodes(ep);
       $('#detailEpisodes').innerHTML=currentEpisodes.map((x,i)=>'<button class="episode" data-episode="'+i+'">EP '+esc(x.episodeNumber??i+1)+'</button>').join('')||'<div class="subtle">No episodes listed.</div>';
       $('#detailEpisodes').querySelectorAll('[data-episode]').forEach(b=>b.onclick=()=>openWatch(id,Number(b.dataset.episode)+1));
     }catch(e){notify(e.message);}
@@ -158,14 +165,14 @@
   async function openWatch(id,episodeNo){
     $('#detailModal').classList.remove('open');$('#homeView').classList.add('hidden');$('#watchView').classList.add('active');$('#watchTitle').textContent=currentAnime?titleOf(currentAnime):'Now playing';window.scrollTo(0,0);
     try{
-      if(!currentEpisodes.length)currentEpisodes=listFrom(await api('/episodes/'+encodeURIComponent(id)));
+      if(!currentEpisodes.length)currentEpisodes=normalizeEpisodes(await api('/episodes/'+encodeURIComponent(id)));
       renderEpisodes();
       const ep=currentEpisodes.find(x=>Number(x.episodeNumber)===Number(episodeNo))||currentEpisodes[Math.max(0,episodeNo-1)];
       if(ep) await loadServers(ep);
     }catch(e){$('#playerFrame').innerHTML='<div class="empty">'+esc(e.message)+'</div>';}
   }
   function renderEpisodes(){
-    $('#watchEpisodes').innerHTML=currentEpisodes.map((x,i)=>'<button class="episode" data-watch-ep="'+i+'">EP '+esc(x.episodeNumber??i+1)+'</button>').join('');
+    $('#watchEpisodes').innerHTML=currentEpisodes.map((x,i)=>'<button class="episode" data-watch-ep="'+i+'">EP '+esc(x.episodeNumber??i+1)+'</button>').join('') || '<div class="subtle">No episodes available.</div>';
     $('#watchEpisodes').querySelectorAll('[data-watch-ep]').forEach(b=>b.onclick=()=>loadServers(currentEpisodes[Number(b.dataset.watchEp)]));
   }
   async function loadServers(ep){
@@ -173,7 +180,8 @@
     $('#playerFrame').innerHTML='<div class="empty">Loading available servers…</div>';
     try{
       const d=await api('/servers/'+encodeURIComponent(ep.id)+'?type='+$('#audioType').value);
-      const data=d.data||d;currentServers=data.servers||data.sources||[];
+      const data=d?.data ?? d;
+      currentServers=Array.isArray(data) ? data : (data.servers||data.sources||data.links||[]);
       $('#serverSelect').innerHTML=currentServers.map((s,i)=>'<option value="'+i+'">'+esc(s.name||s.serverName||('Server '+(i+1)))+'</option>').join('')||'<option>No servers</option>';
       showServer(0);
     }catch(e){$('#playerFrame').innerHTML='<div class="empty">'+esc(e.message)+'</div>';}
@@ -193,7 +201,7 @@
   $('#closeSettings').onclick=()=>$('#settingsModal').classList.remove('open');
   $('#saveApi').onclick=()=>{apiBase=$('#apiInput').value.trim().replace(/\/$/,'');localStorage.setItem('kazime_api',apiBase);$('#settingsModal').classList.remove('open');loadHome();notify('API connection updated');};
   $('#exploreBtn').onclick=()=>$('#trending').scrollIntoView({behavior:'smooth'});
-  $('#randomBtn').onclick=async()=>{try{const d=await api('/random');const id=d.id||d.data?.id;if(id)openAnime(id);else notify('No random anime returned');}catch(e){notify(e.message);}};
+  $('#randomBtn').onclick=async()=>{try{const d=await api('/random');const id=d.id||d.animeId||d.data?.id;if(id)openAnime(id);else notify('No random anime returned');}catch(e){notify(e.message);}};
   $('#homeLink').onclick=e=>{e.preventDefault();$('#backHome').click();};
   $('#year').textContent=new Date().getFullYear();
   if(!apiBase){$('#settingsModal').classList.add('open');$('#apiInput').placeholder='Paste your deployed API URL';}
