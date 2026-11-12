@@ -1,19 +1,37 @@
 # KAZIME
 
-A responsive anime discovery website powered directly by the public [AniList GraphQL API](https://docs.anilist.co/). No API key, backend deployment, or manual API URL configuration is required.
+A responsive anime discovery website using the same HiAnime provider endpoints implemented in [Kaztral-ar/ani-watch](https://github.com/Kaztral-ar/ani-watch).
 
 ## Features
 
-- Trending, popular, and recently updated anime
-- Anime search and genre browsing
-- Anime details, synopsis, scores, and episode counts
-- Device-local watchlist
-- Watch buttons that open availability searches on JustWatch India and official anime channel searches on YouTube
-- Responsive dark interface for mobile and desktop
+- HiAnime search
+- Anime detail pages and poster extraction
+- Episode lists from the HiAnime episode-list endpoint
+- SUB/DUB server listings
+- Watchlist saved in browser local storage
+- Responsive dark interface
+
+## HiAnime integration
+
+KAZIME uses the provider base URL and routes from AniWatch's `lib/aniwatch/provider_hianime.sh`:
+
+- `https://hianime.at/search?keyword=...`
+- `https://hianime.at/api/theme/episode/list/{anime-slug}`
+- `https://hianime.at/api/theme/episode/servers?episodeId={episode-id}`
+
+No AniList, Tenrai, API key, or manual API URL setting is used.
+
+## Important browser limitation
+
+AniWatch is a POSIX shell application and makes provider requests with `curl`. KAZIME is a static browser website, so its requests are subject to browser CORS rules. If HiAnime does not allow requests from the GitHub Pages origin, search and episode requests will be blocked by the browser. In that case, a small server-side proxy (for example, a Cloudflare Worker) is required; changing frontend JavaScript cannot bypass CORS.
+
+The AniWatch provider currently extracts search results, episode IDs, and server labels. A server entry may expose only an opaque ID rather than a direct media URL. KAZIME therefore opens the HiAnime episode page when no direct URL is supplied; it does not claim that every listed server can be embedded or played directly.
+
+HiAnime is an unofficial provider integration. Its endpoints and markup can change. Use provider content in accordance with applicable laws and terms.
 
 ## Run locally
 
-This is a static website. Serve the repository with any static HTTP server:
+Serve the repository root with any static HTTP server:
 
 ```bash
 python -m http.server 8080
@@ -21,26 +39,12 @@ python -m http.server 8080
 
 Then open http://localhost:8080.
 
-## API
-
-KAZIME sends public GraphQL requests directly to `https://graphql.anilist.co`. Public anime metadata does not require AniList authentication. See the [official AniList API documentation](https://docs.anilist.co/guide/graphql/).
-
-## Watching anime
-
-AniList provides anime metadata; it does not provide video streams or episode playback. The **Watch now** action opens:
-- [JustWatch India](https://www.justwatch.com/in/) to check licensed streaming availability.
-- YouTube search for official anime distributors and channels such as Muse Asia and Ani-One.
-
-Availability depends on region and provider subscriptions. KAZIME does not host, proxy, or embed copyrighted video.
-
 ## Deploy with GitHub Pages
 
-1. Open **Settings → Pages** in this repository.
-2. Choose **Deploy from a branch**.
-3. Select `main` and `/(root)`, then save.
-4. Open the published GitHub Pages URL. The site connects to AniList automatically.
+1. Open **Settings → Pages**.
+2. Select **Deploy from a branch**.
+3. Choose `main` and `/(root)`, then save.
 
-## Notes
+## Local data
 
-- AniList API availability and rate limits are controlled by AniList.
-- Watchlist entries are stored in browser local storage and are not synced between devices.
+Watchlist entries are stored in browser local storage and are not synced between devices.
