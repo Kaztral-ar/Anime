@@ -43,8 +43,8 @@
   <div class="home-view" id="homeView">
     <section class="hero" id="home"><div class="hero-art"></div><div class="hero-copy">
       <div class="eyebrow">Your next obsession starts here</div><h1>ANIME<br>WITHOUT LIMITS.</h1>
-      <p>Discover new worlds, unforgettable stories and the anime everyone is talking about. Your next favourite is one click away.</p>
-      <div class="hero-meta"><span class="pill">SUB & DUB</span><span>Curated for anime fans</span><span>✦</span></div>
+      <p>Search HiAnime, browse episodes, and explore available SUB/DUB servers.</p>
+      <div class="hero-meta"><span class="pill">HIANIME API</span><span>AniWatch provider</span><span>✦</span></div>
       <button class="primary" id="exploreBtn">Explore anime&nbsp; →</button><button class="secondary" id="randomBtn">Surprise me</button>
     </div></section>
     <section class="search-results" id="searchResults"><div class="section-head"><h2 id="searchHeading">Search results</h2><span class="subtle" id="searchCount"></span></div><div class="cards" id="searchGrid"></div></section>
@@ -55,35 +55,189 @@
     <section class="section" id="watchlistSection"><div class="section-head"><h2>Your watchlist</h2><span class="subtle">Saved on this device</span></div><div class="cards" id="watchlistGrid"></div></section>
   </div>
   </main>
-<footer><span>© <span id="year"></span> KAZIME. Made for anime fans.</span><span>Anime information by AniList. Watch links open licensed providers and official channels.</span></footer>
+<footer><span>© <span id="year"></span> KAZIME. Made for anime fans.</span><span>Anime discovery and episode listings powered by the HiAnime provider used in AniWatch.</span></footer>
 <div class="modal" id="detailModal"><div class="detail"><div class="detail-hero" id="detailHero"><div class="detail-title"><button class="close" id="closeModal">✕</button><div class="eyebrow" id="detailType">ANIME</div><h2 id="detailName">Title</h2><div id="detailMeta" class="subtle"></div><div style="margin-top:16px"><button class="primary" id="detailWatch">Watch now →</button><button class="secondary" id="saveAnime">＋ Watchlist</button></div></div></div><div class="detail-body"><p id="detailSynopsis"></p><div class="subtle" id="detailGenres"></div><h3 style="font:600 17px 'Space Grotesk';margin-top:28px">Where to watch</h3><div id="detailEpisodes" class="subtle"></div></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
 (() => {
- const $=s=>document.querySelector(s), API='https://graphql.anilist.co';
- const saved=()=>{try{const v=JSON.parse(localStorage.getItem('kazime_saved')||'[]');return Array.isArray(v)?v:[]}catch{return[]}};
- const notify=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300)};
- const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const title=a=>a?.title?.english||a?.title?.romaji||a?.title?.native||'Untitled anime';
- const poster=a=>a?.coverImage?.extraLarge||a?.coverImage?.large||'';
- const fields='id title { romaji english native } coverImage { large extraLarge } format episodes status averageScore genres description seasonYear';
- async function gql(query,variables={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({query,variables})});const j=await r.json();if(!r.ok||j.errors?.length)throw new Error(j.errors?.[0]?.message||'AniList request failed. Try again.');return j.data}
- function card(a){const id=a.id,t=title(a),p=poster(a),mark=saved().some(x=>Number(x.id)===id);return '<article class="anime-card" data-id="'+id+'"><div class="poster-wrap"><img loading="lazy" src="'+esc(p)+'" alt="'+esc(t)+'" onerror="this.style.opacity=.15"><span class="type-tag">'+esc(a.format||'ANIME')+'</span><button class="bookmark" data-save="'+id+'">'+(mark?'✓':'+')+'</button><div class="poster-overlay"><span>'+esc(a.seasonYear||'')+'</span><span>'+(a.episodes||'?')+' eps</span></div></div><h3>'+esc(t)+'</h3><div class="card-sub">'+esc(a.averageScore?'★ '+(a.averageScore/10).toFixed(1)+'/10':a.status||'Anime')+'</div></article>'}
- function grid(sel,items){const el=$(sel);el.innerHTML=items?.length?items.map(card).join(''):'<div class="empty" style="grid-column:1/-1">No anime found.</div>'}
- async function home(){const q='query{trending:Page(page:1,perPage:18){media(type:ANIME,isAdult:false,sort:TRENDING_DESC){'+fields+'}} popular:Page(page:1,perPage:18){media(type:ANIME,isAdult:false,sort:POPULARITY_DESC){'+fields+'}} latest:Page(page:1,perPage:18){media(type:ANIME,isAdult:false,sort:UPDATED_AT_DESC){'+fields+'}}}';try{const d=await gql(q);grid('#trendingGrid',d.trending.media);grid('#popularGrid',d.popular.media);grid('#latestGrid',d.latest.media)}catch(e){['#trendingGrid','#popularGrid','#latestGrid'].forEach(x=>$(x).innerHTML='<div class="error" style="grid-column:1/-1">'+esc(e.message)+'</div>')}watchlist()}
- async function search(q){if(!q.trim()){$('#searchResults').classList.remove('show');return}$('#searchResults').classList.add('show');$('#searchHeading').textContent='Results for “'+q+'”';$('#searchGrid').innerHTML='<div class="skeleton"></div>'.repeat(6);try{const d=await gql('query($s:String!){Page(page:1,perPage:24){pageInfo{total} media(search:$s,type:ANIME,isAdult:false,sort:SEARCH_MATCH){'+fields+'}}}',{s:q});$('#searchCount').textContent=(d.Page.pageInfo.total||d.Page.media.length)+' results';grid('#searchGrid',d.Page.media)}catch(e){$('#searchGrid').innerHTML='<div class="error" style="grid-column:1/-1">'+esc(e.message)+'</div>'}}
- let timer;$('#searchInput').addEventListener('input',e=>{clearTimeout(timer);timer=setTimeout(()=>search(e.target.value),350)});
- function save(id){const a=saved(),i=a.findIndex(x=>String(x.id)===String(id));if(i>=0)a.splice(i,1);else{const el=document.querySelector('.anime-card[data-id="'+CSS.escape(id)+'"]');a.push({id:Number(id),title:el?.querySelector('h3')?.textContent||'Anime',poster:el?.querySelector('img')?.src||''})}localStorage.setItem('kazime_saved',JSON.stringify(a));watchlist();document.querySelectorAll('[data-save="'+CSS.escape(id)+'"]').forEach(b=>b.textContent=i>=0?'+':'✓');notify(i>=0?'Removed from watchlist':'Added to watchlist')}
- function watchlist(){const a=saved();$('#watchlistGrid').innerHTML=a.length?a.map(x=>'<article class="anime-card" data-id="'+x.id+'"><div class="poster-wrap"><img loading="lazy" src="'+esc(x.poster)+'" alt="'+esc(x.title)+'"><button class="bookmark" data-save="'+x.id+'">✓</button></div><h3>'+esc(x.title)+'</h3><div class="card-sub">Saved anime</div></article>').join(''):'<div class="empty" style="grid-column:1/-1">Your watchlist is empty. Save anime with the + button.</div>'}
- async function genre(g){$('#searchResults').classList.add('show');$('#searchHeading').textContent=g.toUpperCase()+' anime';$('#searchGrid').innerHTML='<div class="skeleton"></div>'.repeat(6);$('#searchResults').scrollIntoView({behavior:'smooth'});try{const d=await gql('query($g:String!){Page(page:1,perPage:24){media(type:ANIME,isAdult:false,genre_in:[$g],sort:POPULARITY_DESC){'+fields+'}}}',{g});grid('#searchGrid',d.Page.media)}catch(e){$('#searchGrid').innerHTML='<div class="error" style="grid-column:1/-1">'+esc(e.message)+'</div>'}}
- async function details(id){try{const d=await gql('query($id:Int){Media(id:$id,type:ANIME){'+fields+'}}',{id:Number(id)});const a=d.Media;if(!a)throw Error('Anime not found');window.activeAnime=a;$('#detailName').textContent=title(a);$('#detailType').textContent=a.format||'ANIME';$('#detailMeta').textContent=[a.seasonYear,a.status,a.episodes?a.episodes+' episodes':'',a.averageScore?'Score '+(a.averageScore/10).toFixed(1)+'/10':''].filter(Boolean).join(' · ');$('#detailSynopsis').innerHTML=a.description||'Synopsis unavailable.';$('#detailGenres').textContent=(a.genres||[]).join(' · ');$('#detailHero').style.backgroundImage=poster(a)?'linear-gradient(90deg,#11131b88,transparent),url("'+poster(a)+'")':'none';$('#detailEpisodes').textContent=(a.episodes?a.episodes+' episodes in the database. ':'Episode count unavailable. ')+'Use the watch button to find licensed streaming options in your region.';$('#saveAnime').textContent=saved().some(x=>Number(x.id)===a.id)?'✓ Saved':'＋ Watchlist';$('#saveAnime').onclick=()=>save(a.id);$('#detailWatch').onclick=()=>watch(a);$('#detailModal').classList.add('open')}catch(e){notify(e.message)}}
- function watch(a){const q=encodeURIComponent(title(a));window.open('https://www.justwatch.com/in/search?q='+q,'_blank','noopener');window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(title(a)+' official anime Muse Asia Ani-One'),'_blank','noopener');notify('Opened streaming availability and official channel searches')}
- document.addEventListener('click',e=>{const b=e.target.closest('[data-save]');if(b){e.stopPropagation();save(b.dataset.save);return}const c=e.target.closest('.anime-card');if(c?.dataset.id)details(c.dataset.id);const g=e.target.closest('[data-genre]');if(g)genre(g.dataset.genre)});
- $('#closeModal').onclick=()=>$('#detailModal').classList.remove('open');$('#detailModal').addEventListener('click',e=>{if(e.target===$('#detailModal'))$('#detailModal').classList.remove('open')});
- $('#exploreBtn').onclick=()=>$('#trending').scrollIntoView({behavior:'smooth'});
- $('#randomBtn').onclick=async()=>{try{const d=await gql('query{Page(page:1,perPage:50){media(type:ANIME,isAdult:false,sort:POPULARITY_DESC){id}}}');const a=d.Page.media;if(a.length)details(a[Math.floor(Math.random()*a.length)].id)}catch(e){notify(e.message)}};
- $('#homeLink').onclick=e=>{e.preventDefault();$('#searchResults').classList.remove('show');window.scrollTo({top:0,behavior:'smooth'})};$('#year').textContent=new Date().getFullYear();home();
+  const $ = selector => document.querySelector(selector);
+  const BASE = "https://hianime.at";
+  const saved = () => { try { const value=JSON.parse(localStorage.getItem("kazime_saved")||"[]"); return Array.isArray(value)?value:[]; } catch { return []; } };
+  const esc = value => String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+  const notify = message => { const toast=$("#toast"); toast.textContent=message; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"),2600); };
+  let currentAnime=null, currentEpisodes=[];
+  const titleOf = item => item.title || item.name || item.getAttribute?.("title") || "Untitled anime";
+  const slugOf = item => item.slug || item.id || "";
+  const headers = {"Accept":"text/html,application/xhtml+xml,application/json"};
+
+  async function request(path, accept="text/html,application/xhtml+xml,application/json") {
+    const response=await fetch(BASE+path,{headers:{"Accept":accept}});
+    if(!response.ok) throw new Error("HiAnime returned HTTP "+response.status);
+    return response;
+  }
+  async function requestJSON(path) {
+    const response=await request(path,"application/json");
+    const data=await response.json();
+    const html=data?.html??data?.data?.html??data?.result?.html??"";
+    if(!html) throw new Error("HiAnime returned an unexpected response.");
+    return html;
+  }
+  function parseCards(html) {
+    const doc=new DOMParser().parseFromString(html,"text/html");
+    const nodes=[...doc.querySelectorAll(".film-detail")];
+    const items=[];
+    for(const node of nodes) {
+      const link=node.querySelector("a[href*='/watch/'],a.film-name,a[href*='/anime/']");
+      const image=node.querySelector(".film-poster img,img");
+      if(!link) continue;
+      const href=link.getAttribute("href")||"";
+      const slug=href.split("/").filter(Boolean).pop()?.split("?")[0]||"";
+      if(!slug) continue;
+      const title=link.getAttribute("title")||link.textContent.trim()||image?.getAttribute("alt")||"Untitled anime";
+      items.push({id:slug,title,poster:image?.getAttribute("data-src")||image?.getAttribute("data-lazy-src")||image?.getAttribute("src")||"",type:node.querySelector(".fdi-item")?.textContent.trim()||"ANIME",episode:node.querySelector(".tick-item")?.textContent.trim()||""});
+    }
+    if(items.length) return [...new Map(items.map(item=>[item.id,item])).values()];
+    for(const link of doc.querySelectorAll("a[href*='/watch/'],a[href*='/anime/']")) {
+      const href=link.getAttribute("href")||"", slug=href.split("/").filter(Boolean).pop()?.split("?")[0]||"";
+      const title=link.getAttribute("title")||link.textContent.trim();
+      if(slug&&title&&!items.some(item=>item.id===slug)) items.push({id:slug,title,poster:link.querySelector("img")?.getAttribute("data-src")||link.querySelector("img")?.getAttribute("src")||""});
+    }
+    return items;
+  }
+  function renderGrid(selector,items) {
+    const element=$(selector); if(!element)return;
+    element.innerHTML=items.length?items.map(item=>'<article class="anime-card" data-id="'+esc(item.id)+'"><div class="poster-wrap"><img loading="lazy" src="'+esc(item.poster)+'" alt="'+esc(item.title)+'"><span class="type-tag">'+esc(item.type||"ANIME")+'</span><button class="bookmark" data-save="'+esc(item.id)+'">'+(saved().some(x=>x.id===item.id)?"✓":"+")+'</button><div class="poster-overlay"><span>'+esc(item.episode||"")+'</span><span>HiAnime</span></div></div><h3>'+esc(item.title)+'</h3><div class="card-sub">HiAnime</div></article>').join(""):'<div class="empty" style="grid-column:1/-1">No anime found.</div>';
+  }
+  async function loadHome() {
+    try {
+      const response=await request("/home");
+      const html=await response.text();
+      const doc=new DOMParser().parseFromString(html,"text/html");
+      const sections=[...doc.querySelectorAll(".block_area,.block_area_home")];
+      let trending=[],popular=[],latest=[];
+      for(const section of sections) {
+        const heading=(section.querySelector(".cat-heading,.block_area-header,.cat-title")?.textContent||"").toLowerCase();
+        const items=parseCards(section.innerHTML);
+        if(/popular|most watched|top airing/.test(heading)) popular=items;
+        else if(/latest|new episode|recent/.test(heading)) latest=items;
+        else if(/trending|spotlight/.test(heading)) trending=items;
+      }
+      const all=parseCards(html);
+      renderGrid("#trendingGrid",trending.length?trending:all);
+      renderGrid("#popularGrid",popular);
+      renderGrid("#latestGrid",latest);
+    } catch(error) {
+      ["#trendingGrid","#popularGrid","#latestGrid"].forEach(selector=>$(selector).innerHTML='<div class="error" style="grid-column:1/-1">'+esc(error.message)+'<br><small>HiAnime may block browser requests (CORS).</small></div>');
+    }
+    renderWatchlist();
+  }
+  async function searchAnime(query) {
+    if(!query.trim()) { $("#searchResults").classList.remove("show"); return; }
+    $("#searchResults").classList.add("show");
+    $("#searchHeading").textContent='Search results for "'+query+'"';
+    $("#searchGrid").innerHTML='<div class="skeleton"></div>'.repeat(6);
+    try {
+      const response=await request("/search?keyword="+encodeURIComponent(query));
+      const items=parseCards(await response.text());
+      $("#searchCount").textContent=items.length+" results";
+      renderGrid("#searchGrid",items);
+    } catch(error) {
+      $("#searchGrid").innerHTML='<div class="error" style="grid-column:1/-1">'+esc(error.message)+'<br><small>If this is a CORS error, the static GitHub Pages browser cannot call HiAnime directly.</small></div>';
+    }
+  }
+  let searchTimer;
+  $("#searchInput").addEventListener("input",event=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>searchAnime(event.target.value),400);});
+
+  function renderWatchlist() {
+    const items=saved();
+    $("#watchlistGrid").innerHTML=items.length?items.map(item=>'<article class="anime-card" data-id="'+esc(item.id)+'"><div class="poster-wrap"><img loading="lazy" src="'+esc(item.poster)+'" alt="'+esc(item.title)+'"><button class="bookmark" data-save="'+esc(item.id)+'">✓</button></div><h3>'+esc(item.title)+'</h3><div class="card-sub">Saved anime</div></article>').join(""):'<div class="empty" style="grid-column:1/-1">Your watchlist is empty. Save anime with the + button.</div>';
+  }
+  function toggleSaved(id) {
+    const items=saved(), index=items.findIndex(item=>item.id===id);
+    if(index>=0) items.splice(index,1);
+    else items.push({id,title:currentAnime?.id===id?currentAnime.title:document.querySelector('.anime-card[data-id="'+CSS.escape(id)+'"] h3')?.textContent||id,poster:currentAnime?.id===id?currentAnime.poster:document.querySelector('.anime-card[data-id="'+CSS.escape(id)+'"] img')?.src||""});
+    localStorage.setItem("kazime_saved",JSON.stringify(items)); renderWatchlist();
+    document.querySelectorAll('[data-save="'+CSS.escape(id)+'"]').forEach(button=>button.textContent=index>=0?"+":"✓");
+    notify(index>=0?"Removed from watchlist":"Added to watchlist");
+  }
+  function showEpisodes(episodes) {
+    currentEpisodes=episodes;
+    const container=$("#detailEpisodes");
+    container.innerHTML=episodes.length?'<div class="episode-list">'+episodes.map((episode,index)=>'<button class="episode" data-episode="'+index+'">EP '+esc(episode.number)+'</button>').join("")+'</div><div id="serverResults" style="margin-top:18px"></div><div id="playerArea"></div>':'<p>No episodes were returned by HiAnime.</p>';
+  }
+  async function loadAnime(slug) {
+    try {
+      $("#detailModal").classList.add("open");
+      $("#detailName").textContent="Loading anime…";
+      $("#detailEpisodes").textContent="Loading episodes from HiAnime…";
+      const page=await request("/anime/"+encodeURIComponent(slug));
+      const html=await page.text(), doc=new DOMParser().parseFromString(html,"text/html");
+      const title=doc.querySelector(".film-name")?.textContent.trim()||doc.querySelector("h1")?.textContent.trim()||slug;
+      const poster=doc.querySelector(".film-poster img")?.getAttribute("src")||doc.querySelector(".film-poster img")?.getAttribute("data-src")||"";
+      const description=doc.querySelector(".film-description,.description")?.textContent.trim()||"Anime information provided by HiAnime.";
+      const genres=[...doc.querySelectorAll(".item-list a[href*='/genre/']")].map(node=>node.textContent.trim()).filter(Boolean);
+      currentAnime={id:slug,title,poster};
+      $("#detailName").textContent=title;
+      $("#detailType").textContent="HIANIME";
+      $("#detailMeta").textContent=[...doc.querySelectorAll(".item-title")].slice(0,4).map(node=>node.textContent.trim()).filter(Boolean).join(" · ");
+      $("#detailSynopsis").textContent=description;
+      $("#detailGenres").textContent=genres.join(" · ");
+      $("#detailHero").style.backgroundImage=poster?'linear-gradient(90deg,#11131bba,transparent),url("'+poster+'")':"none";
+      $("#saveAnime").textContent=saved().some(item=>item.id===slug)?"✓ Saved":"＋ Watchlist";
+      $("#saveAnime").onclick=()=>toggleSaved(slug);
+      const episodeHtml=await requestJSON("/api/theme/episode/list/"+encodeURIComponent(slug));
+      const epDoc=new DOMParser().parseFromString(episodeHtml,"text/html");
+      const episodes=[...epDoc.querySelectorAll(".ep-item")].map(node=>({id:node.getAttribute("data-id"),number:node.getAttribute("data-number")||node.textContent.trim()})).filter(item=>item.id&&/^\d+$/.test(item.id));
+      showEpisodes(episodes);
+    } catch(error) {
+      $("#detailEpisodes").textContent=error.message+" — check whether HiAnime allows browser-origin requests.";
+    }
+  }
+  async function loadServers(episode) {
+    const box=$("#serverResults"); if(!box)return;
+    box.innerHTML='<p class="subtle">Loading SUB/DUB servers…</p>';
+    $("#playerArea").innerHTML="";
+    try {
+      const html=await requestJSON("/api/theme/episode/servers?episodeId="+encodeURIComponent(episode.id));
+      const doc=new DOMParser().parseFromString(html,"text/html");
+      const servers=[...doc.querySelectorAll(".server-item")].map(node=>({
+        type:node.getAttribute("data-type")||"sub",
+        name:node.getAttribute("data-server-name")||"Server",
+        id:node.getAttribute("data-id")||"",
+        url:node.getAttribute("data-link")||node.getAttribute("data-url")||node.getAttribute("data-src")||""
+      })).filter(server=>server.name);
+      if(!servers.length) { box.innerHTML="<p>No servers found for this episode.</p>"; return; }
+      box.innerHTML='<h3 style="font:600 15px Space Grotesk">Available servers</h3><div class="episode-list">'+servers.map((server,index)=>'<button class="episode" data-server="'+index+'">'+esc(server.type.toUpperCase())+' · '+esc(server.name)+'</button>').join("")+'</div>';
+      box.querySelectorAll("[data-server]").forEach(button=>button.addEventListener("click",()=>{
+        const server=servers[Number(button.dataset.server)];
+        if(server.url&&/^https?:\/\//i.test(server.url)) {
+          $("#playerArea").innerHTML='<p class="subtle">Opening selected server. Playback depends on whether the provider permits embedding.</p><div class="watch-frame"><iframe src="'+esc(server.url)+'" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe></div>';
+        } else {
+          const watchUrl=BASE+"/watch/"+encodeURIComponent(currentAnime.id)+"?ep="+encodeURIComponent(episode.id);
+          $("#playerArea").innerHTML='<p class="subtle">This server exposes an opaque ID, not a direct video URL. Open the episode on HiAnime to continue playback.</p><a class="primary" style="display:inline-block;margin-top:10px" href="'+esc(watchUrl)+'" target="_blank" rel="noopener noreferrer">Open episode on HiAnime ↗</a>';
+        }
+      }));
+    } catch(error) { box.innerHTML='<p class="error">'+esc(error.message)+'</p>'; }
+  }
+
+  document.addEventListener("click",event=>{
+    const save=event.target.closest("[data-save]");
+    if(save){event.stopPropagation();toggleSaved(save.dataset.save);return;}
+    const episode=event.target.closest("[data-episode]");
+    if(episode){loadServers(currentEpisodes[Number(episode.dataset.episode)]);return;}
+    const card=event.target.closest(".anime-card");
+    if(card?.dataset.id){loadAnime(card.dataset.id);return;}
+    const genre=event.target.closest("[data-genre]");
+    if(genre)searchAnime(genre.dataset.genre);
+  });
+  $("#closeModal").onclick=()=>$("#detailModal").classList.remove("open");
+  $("#detailModal").addEventListener("click",event=>{if(event.target===$("#detailModal"))$("#detailModal").classList.remove("open");});
+  $("#exploreBtn").onclick=()=>$("#trending").scrollIntoView({behavior:"smooth"});
+  $("#randomBtn").onclick=()=>{const cards=[...document.querySelectorAll("#trendingGrid .anime-card")];if(cards.length)loadAnime(cards[Math.floor(Math.random()*cards.length)].dataset.id);else notify("Load anime first.");};
+  $("#homeLink").onclick=event=>{event.preventDefault();$("#searchResults").classList.remove("show");window.scrollTo({top:0,behavior:"smooth"});};
+  $("#year").textContent=new Date().getFullYear();
+  loadHome();
 })();
-</script>>
+</script>
 </body>
 </html>
